@@ -353,9 +353,10 @@ class DataCollector:
         mainline_slow_df = df[df['car_name'].str.startswith('m')]
         mainline_fast_df = df[df['car_name'].str.startswith('f')]
         ramp_df = df[df['car_name'].str.startswith('r')]
-        
+        mainline_df = df[df['vehicle_type'].isin(['mainline', 'fast_mainline'])]
+
         metrics = {}
-        
+
         # 主线性能指标
         if len(mainline_slow_df) > 0:
             mainline_vehicles = mainline_slow_df['car_name'].unique()
@@ -375,6 +376,48 @@ class DataCollector:
         if len(mainline_fast_df) > 0:
             metrics['fast_mainline_avg_speed'] = mainline_fast_df['velocity'].mean()
             metrics['fast_mainline_std_speed'] = mainline_fast_df['velocity'].std()
+
+        if len(mainline_df) > 0:
+            per_vehicle_avg_speed = mainline_df.groupby('car_name')['velocity'].mean()
+
+            entry_lane_index = (
+                mainline_df.sort_values('timestamp')
+                .groupby('car_name')
+                .first()['lane_index']
+            )
+            entry_slow_ids = entry_lane_index[entry_lane_index == 0].index
+            entry_fast_ids = entry_lane_index[entry_lane_index == 1].index
+
+            metrics['mainline_entry_slow_avg_speed'] = (
+                per_vehicle_avg_speed.loc[entry_slow_ids].mean()
+                if len(entry_slow_ids) > 0 else 0
+            )
+            metrics['mainline_entry_fast_avg_speed'] = (
+                per_vehicle_avg_speed.loc[entry_fast_ids].mean()
+                if len(entry_fast_ids) > 0 else 0
+            )
+
+        if len(df) > 0:
+            per_vehicle_avg_speed_all = df.groupby('car_name')['velocity'].mean()
+            exit_lane_records_all = (
+                df.sort_values('timestamp')
+                .groupby('car_name')
+                .last()[['lane_index', 'lane_id_full']]
+            )
+            exit_mainline_all = exit_lane_records_all[
+                exit_lane_records_all['lane_id_full'].str.contains('mainline_after', na=False)
+            ]
+            exit_slow_ids_all = exit_mainline_all[exit_mainline_all['lane_index'] == 0].index
+            exit_fast_ids_all = exit_mainline_all[exit_mainline_all['lane_index'] == 1].index
+
+            metrics['overall_exit_slow_avg_speed'] = (
+                per_vehicle_avg_speed_all.loc[exit_slow_ids_all].mean()
+                if len(exit_slow_ids_all) > 0 else 0
+            )
+            metrics['overall_exit_fast_avg_speed'] = (
+                per_vehicle_avg_speed_all.loc[exit_fast_ids_all].mean()
+                if len(exit_fast_ids_all) > 0 else 0
+            )
         
         # 匝道性能指标
         if len(ramp_df) > 0:
@@ -505,7 +548,16 @@ class PerformanceAnalyzer:
         # 主线性能分析
         if 'mainline_avg_travel_time' in metrics:
             travel_time = metrics['mainline_avg_travel_time']
-            avg_speed = metrics['mainline_avg_speed']
+            entry_slow_speed = metrics.get('mainline_entry_slow_avg_speed')
+            entry_fast_speed = metrics.get('mainline_entry_fast_avg_speed')
+            avg_speed = metrics.get('mainline_avg_speed', 0)
+            if entry_slow_speed or entry_fast_speed:
+                speeds = [
+                    speed for speed in [entry_slow_speed, entry_fast_speed]
+                    if speed is not None and speed > 0
+                ]
+                if speeds:
+                    avg_speed = float(np.mean(speeds))
             
             analysis['summary']['mainline'] = {
                 'avg_travel_time': f"{travel_time:.2f} 秒",
@@ -576,6 +628,18 @@ class PerformanceAnalyzer:
             report.append(f"  主线性能:")
             report.append(f"    - 平均通行时间: {mainline['avg_travel_time']}")
             report.append(f"    - 平均速度: {mainline['avg_speed']}")
+            if 'mainline_entry_slow_avg_speed' in metrics:
+                report.append(
+                    "    - 入口慢车道平均速度: "
+                    f"{metrics['mainline_entry_slow_avg_speed']:.2f} m/s "
+                    f"({metrics['mainline_entry_slow_avg_speed']*3.6:.2f} km/h)"
+                )
+            if 'mainline_entry_fast_avg_speed' in metrics:
+                report.append(
+                    "    - 入口快车道平均速度: "
+                    f"{metrics['mainline_entry_fast_avg_speed']:.2f} m/s "
+                    f"({metrics['mainline_entry_fast_avg_speed']*3.6:.2f} km/h)"
+                )
             report.append(f"    - 性能评级: {mainline['performance']}")
         
         if 'ramp' in analysis['summary']:

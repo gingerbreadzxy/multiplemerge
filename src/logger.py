@@ -202,8 +202,21 @@ class SimulationLogger:
         if 'mainline_avg_travel_time' in metrics:
             self.log("主线性能:")
             self.log(f"  平均通行时间: {metrics['mainline_avg_travel_time']:.2f} 秒")
-            self.log(f"  平均速度: {metrics['mainline_avg_speed']:.2f} m/s "
-                    f"({metrics['mainline_avg_speed']*3.6:.2f} km/h)")
+            if 'mainline_entry_slow_avg_speed' in metrics:
+                self.log(
+                    "  入口慢车道平均速度: "
+                    f"{metrics['mainline_entry_slow_avg_speed']:.2f} m/s "
+                    f"({metrics['mainline_entry_slow_avg_speed']*3.6:.2f} km/h)"
+                )
+            if 'mainline_entry_fast_avg_speed' in metrics:
+                self.log(
+                    "  入口快车道平均速度: "
+                    f"{metrics['mainline_entry_fast_avg_speed']:.2f} m/s "
+                    f"({metrics['mainline_entry_fast_avg_speed']*3.6:.2f} km/h)"
+                )
+            if 'mainline_avg_speed' in metrics:
+                self.log(f"  平均速度: {metrics['mainline_avg_speed']:.2f} m/s "
+                        f"({metrics['mainline_avg_speed']*3.6:.2f} km/h)")
             self.log(f"  速度标准差: {metrics.get('mainline_std_speed', 0):.2f} m/s")
         
         if 'ramp_merge_success_rate' in metrics:
@@ -218,8 +231,21 @@ class SimulationLogger:
             self.log(f"  急刹事件: {metrics['harsh_braking_events']}")
             self.log(f"  急加速事件: {metrics['harsh_acceleration_events']}")
         
-        self.log(f"整体平均速度: {metrics.get('overall_avg_speed', 0):.2f} m/s "
-                f"({metrics.get('overall_avg_speed', 0)*3.6:.2f} km/h)")
+        if 'overall_exit_slow_avg_speed' in metrics:
+            self.log(
+                "整体慢车道离开平均速度: "
+                f"{metrics.get('overall_exit_slow_avg_speed', 0):.2f} m/s "
+                f"({metrics.get('overall_exit_slow_avg_speed', 0)*3.6:.2f} km/h)"
+            )
+        if 'overall_exit_fast_avg_speed' in metrics:
+            self.log(
+                "整体快车道离开平均速度: "
+                f"{metrics.get('overall_exit_fast_avg_speed', 0):.2f} m/s "
+                f"({metrics.get('overall_exit_fast_avg_speed', 0)*3.6:.2f} km/h)"
+            )
+        if 'overall_avg_speed' in metrics:
+            self.log(f"整体平均速度: {metrics.get('overall_avg_speed', 0):.2f} m/s "
+                    f"({metrics.get('overall_avg_speed', 0)*3.6:.2f} km/h)")
         self.log("")
     
     def log_simulation_progress(self, current_time: float, total_time: float,
@@ -470,5 +496,4 @@ if __name__ == "__main__":
     logger.finalize()
     
     print("测试日志已生成: test_log.txt")
-
 

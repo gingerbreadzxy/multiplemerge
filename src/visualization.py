@@ -125,6 +125,12 @@ class Visualizer:
         labels = []
         colors = []
         
+        if 'mainline_entry_slow_avg_speed' in metrics:
+            speeds.append(metrics['mainline_entry_slow_avg_speed'])
+            labels.append('主线入口慢车道平均速度')
+        if 'mainline_entry_fast_avg_speed' in metrics:
+            speeds.append(metrics['mainline_entry_fast_avg_speed'])
+            labels.append('主线入口快车道平均速度')
         if 'mainline_avg_speed' in metrics:
             speeds.append(metrics['mainline_avg_speed'])
             labels.append('主线平均速度')
@@ -135,6 +141,12 @@ class Visualizer:
             labels.append('匝道平均速度')
             colors.append('orange')
         
+        if 'overall_exit_slow_avg_speed' in metrics:
+            speeds.append(metrics['overall_exit_slow_avg_speed'])
+            labels.append('整体慢车道离开平均速度')
+        if 'overall_exit_fast_avg_speed' in metrics:
+            speeds.append(metrics['overall_exit_fast_avg_speed'])
+            labels.append('整体快车道离开平均速度')
         if 'overall_avg_speed' in metrics:
             speeds.append(metrics['overall_avg_speed'])
             labels.append('整体平均速度')
@@ -229,7 +241,14 @@ class Visualizer:
         values_radar = []
         
         # 主线速度（归一化到0-1，目标30m/s）
-        if 'mainline_avg_speed' in metrics:
+        mainline_entry_speeds = [
+            metrics.get('mainline_entry_slow_avg_speed', 0),
+            metrics.get('mainline_entry_fast_avg_speed', 0)
+        ]
+        mainline_entry_speeds = [v for v in mainline_entry_speeds if v > 0]
+        if mainline_entry_speeds:
+            values_radar.append(min(np.mean(mainline_entry_speeds) / 30.0, 1.0))
+        elif 'mainline_avg_speed' in metrics:
             values_radar.append(min(metrics['mainline_avg_speed'] / 30.0, 1.0))
         else:
             values_radar.append(0.5)
@@ -254,7 +273,14 @@ class Visualizer:
             values_radar.append(0.8)
         
         # 整体效率（基于平均速度）
-        if 'overall_avg_speed' in metrics:
+        overall_exit_speeds = [
+            metrics.get('overall_exit_slow_avg_speed', 0),
+            metrics.get('overall_exit_fast_avg_speed', 0)
+        ]
+        overall_exit_speeds = [v for v in overall_exit_speeds if v > 0]
+        if overall_exit_speeds:
+            values_radar.append(min(np.mean(overall_exit_speeds) / 28.0, 1.0))
+        elif 'overall_avg_speed' in metrics:
             values_radar.append(min(metrics['overall_avg_speed'] / 28.0, 1.0))
         else:
             values_radar.append(0.5)
