@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SUMO连接文件 -->
+<connections xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/connections_file.xsd">
+    <!-- 主线前段到合流区段：慢车道(0)到中间慢车道(1)，快车道(1)到快车道(2) -->
+    <connection from="mainline_before" to="mainline_merge" fromLane="0" toLane="1"/>  <!-- 慢车道 0 -> 1 -->
+    <connection from="mainline_before" to="mainline_merge" fromLane="1" toLane="2"/>  <!-- 快车道 1 -> 2 -->
+    
+    <!-- 匝道到合流区段的加速车道（最右侧，index 0） -->
+    <connection from="ramp" to="mainline_merge" fromLane="0" toLane="0"/>
+    
+    <!-- 合流区段到主线后段：3车道合并为2车道 -->
+    <connection from="mainline_merge" to="mainline_after" fromLane="0" toLane="0"/>  <!-- 加速车道合流 -->
+    <connection from="mainline_merge" to="mainline_after" fromLane="1" toLane="0"/>  <!-- 慢车道继续 -->
+    <connection from="mainline_merge" to="mainline_after" fromLane="2" toLane="1"/>  <!-- 快车道继续 -->
+</connections>

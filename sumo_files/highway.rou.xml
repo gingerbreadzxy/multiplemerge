@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SUMO路由文件 -->
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
+
+    <!-- 导入车辆类型 -->
+    <!-- 主线车辆：禁止向左换道，保持在慢车道 -->
+    <vType id="mainline_vehicle" 
+           length="5.0" 
+           width="2.0" 
+           minGap="3.0" 
+           maxSpeed="33.33" 
+           accel="2.5" 
+           decel="4.5" 
+           emergencyDecel="7.0"
+           sigma="0.3"
+           tau="0.9"
+           speedFactor="1.0"
+           speedDev="0.05"
+           color="0,100,255"
+           vClass="passenger"
+           carFollowModel="IDM"
+           lcStrategic="0.0"
+           lcCooperative="0.0"
+           lcSpeedGain="0.0"
+           lcKeepRight="0.0"
+           lcPushy="0.0">
+        <param key="minGap" value="3.0"/>
+        <param key="tau" value="0.9"/>
+    </vType>
+
+    <!-- 匝道车辆：积极换道合流 -->
+    <vType id="ramp_vehicle" 
+           length="5.0" 
+           width="2.0" 
+           minGap="3.0" 
+           maxSpeed="33.33" 
+           accel="3.0" 
+           decel="4.5" 
+           emergencyDecel="7.0"
+           sigma="0.3"
+           tau="1.2"
+           speedFactor="1.0"
+           speedDev="0.1"
+           color="255,200,0"
+           vClass="passenger"
+           carFollowModel="IDM"
+           lcStrategic="100.0"
+           lcCooperative="1.0"
+           lcSpeedGain="2.0"
+           lcKeepRight="0.0"
+           lcAssertive="1.5">
+        <param key="minGap" value="3.0"/>
+        <param key="tau" value="1.2"/>
+    </vType>
+
+    <!-- 主线路由：三段式 -->
+    <route id="route_mainline" edges="mainline_before mainline_merge mainline_after" color="blue"/>
+
+    <!-- 匝道路由：从匝道到主线（通过加速车道合流） -->
+    <route id="route_ramp" edges="ramp mainline_merge mainline_after" color="yellow"/>
+
+    <!-- 车辆将通过TraCI动态添加 -->
+
+</routes>

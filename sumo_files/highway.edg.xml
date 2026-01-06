@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SUMO边文件 -->
+<edges xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/edges_file.xsd">
+    <!-- 主线前段：2车道 -->
+    <edge id="mainline_before" from="mainline_start" to="merge_start" priority="3" numLanes="2" speed="33.33">
+        <lane index="0" speed="27.78" disallow="pedestrian"/>  <!-- index 0 = 最右侧 = 慢车道（靠匝道侧） -->
+        <lane index="1" speed="33.33" disallow="pedestrian"/>  <!-- index 1 = 最左侧 = 快车道 -->
+    </edge>
+    
+    <!-- 合流区段：3车道（从右到左：加速车道、慢车道、快车道） -->
+    <edge id="mainline_merge" from="merge_start" to="merge_end" priority="3" numLanes="3" speed="33.33" length="200.0">
+        <lane index="0" speed="27.78" disallow="pedestrian"/>  <!-- index 0 = 最右侧 = 加速车道（匝道进入） -->
+        <lane index="1" speed="27.78" disallow="pedestrian"/>  <!-- index 1 = 中间 = 慢车道（主线车辆，禁止换道） -->
+        <lane index="2" speed="33.33" disallow="pedestrian"/>  <!-- index 2 = 最左侧 = 快车道 -->
+    </edge>
+    
+    <!-- 主线后段：2车道（加速车道在此消失） -->
+    <edge id="mainline_after" from="merge_end" to="mainline_end" priority="3" numLanes="2" speed="33.33">
+        <lane index="0" speed="27.78" disallow="pedestrian"/>  <!-- index 0 = 最右侧 = 慢车道 -->
+        <lane index="1" speed="33.33" disallow="pedestrian"/>  <!-- index 1 = 最左侧 = 快车道 -->
+    </edge>
+    
+    <!-- 匝道：连接到合流区段的加速车道 -->
+    <edge id="ramp" from="ramp_start" to="merge_start" priority="2" numLanes="1" speed="13.89" length="304.0"/>
+</edges>

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2025-10-30 10:16:20 by Eclipse SUMO netconvert Version 1.23.1
+<netconvertConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/netconvertConfiguration.xsd">
+
+    <input>
+        <node-files value="highway.nod.xml"/>
+        <edge-files value="highway.edg.xml"/>
+        <connection-files value="highway.con.xml"/>
+    </input>
+
+    <output>
+        <output-file value="highway.net.xml"/>
+    </output>
+
+    <junctions>
+        <no-turnarounds value="true"/>
+    </junctions>
+
+</netconvertConfiguration>
+-->
+
+<net version="1.20" junctionCornerDetail="5" limitTurnSpeed="5.50" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/net_file.xsd">
+
+    <location netOffset="0.00,50.00" convBoundary="0.00,0.00,2000.00,50.00" origBoundary="0.00,-50.00,2000.00,0.00" projParameter="!"/>
+
+    <edge id=":merge_end_0" function="internal">
+        <lane id=":merge_end_0_0" index="0" disallow="pedestrian" speed="27.78" length="8.27" shape="1196.00,42.00 1198.46,42.50 1200.00,43.60 1201.54,44.70 1204.00,45.20"/>
+        <lane id=":merge_end_0_1" index="1" disallow="pedestrian" speed="27.78" length="8.27" shape="1196.00,45.20 1204.00,45.20"/>
+        <lane id=":merge_end_0_2" index="2" disallow="pedestrian" speed="33.33" length="8.27" shape="1196.00,48.40 1204.00,48.40"/>
+    </edge>
+    <edge id=":merge_start_0" function="internal">
+        <lane id=":merge_start_0_0" index="0" disallow="pedestrian" speed="20.84" length="3.26" shape="960.12,41.73 961.08,41.89 961.74,41.97 962.40,42.00 963.36,42.00"/>
+    </edge>
+    <edge id=":merge_start_1" function="internal">
+        <lane id=":merge_start_1_0" index="0" disallow="pedestrian" speed="27.78" length="3.26" shape="960.10,45.20 963.36,45.20"/>
+        <lane id=":merge_start_1_1" index="1" disallow="pedestrian" speed="33.33" length="3.26" shape="960.10,48.40 963.36,48.40"/>
+    </edge>
+
+    <edge id="mainline_after" from="merge_end" to="mainline_end" priority="3">
+        <lane id="mainline_after_0" index="0" disallow="pedestrian" speed="27.78" length="796.00" shape="1204.00,45.20 2000.00,45.20"/>
+        <lane id="mainline_after_1" index="1" disallow="pedestrian" speed="33.33" length="796.00" shape="1204.00,48.40 2000.00,48.40"/>
+    </edge>
+    <edge id="mainline_before" from="mainline_start" to="merge_start" priority="3">
+        <lane id="mainline_before_0" index="0" disallow="pedestrian" speed="27.78" length="960.10" shape="0.00,45.20 960.10,45.20"/>
+        <lane id="mainline_before_1" index="1" disallow="pedestrian" speed="33.33" length="960.10" shape="0.00,48.40 960.10,48.40"/>
+    </edge>
+    <edge id="mainline_merge" from="merge_start" to="merge_end" priority="3" length="200.00">
+        <lane id="mainline_merge_0" index="0" disallow="pedestrian" speed="27.78" length="200.00" acceleration="1" shape="963.36,42.00 1196.00,42.00"/>
+        <lane id="mainline_merge_1" index="1" disallow="pedestrian" speed="27.78" length="200.00" shape="963.36,45.20 1196.00,45.20"/>
+        <lane id="mainline_merge_2" index="2" disallow="pedestrian" speed="33.33" length="200.00" shape="963.36,48.40 1196.00,48.40"/>
+    </edge>
+    <edge id="ramp" from="ramp_start" to="merge_start" priority="2" length="304.00">
+        <lane id="ramp_0" index="0" speed="13.89" length="304.00" shape="700.26,-1.58 960.12,41.73"/>
+    </edge>
+
+    <junction id="mainline_end" type="dead_end" x="2000.00" y="50.00" incLanes="mainline_after_0 mainline_after_1" intLanes="" shape="2000.00,43.60 2000.00,50.00"/>
+    <junction id="mainline_start" type="dead_end" x="0.00" y="50.00" incLanes="" intLanes="" shape="0.00,50.00 0.00,43.60"/>
+    <junction id="merge_end" type="priority" x="1200.00" y="50.00" incLanes="mainline_merge_0 mainline_merge_1 mainline_merge_2" intLanes=":merge_end_0_0 :merge_end_0_1 :merge_end_0_2" shape="1204.00,50.00 1204.00,43.60 1200.97,42.77 1199.03,41.23 1197.79,40.64 1196.00,40.40 1196.00,50.00">
+        <request index="0" response="010" foes="010" cont="0"/>
+        <request index="1" response="000" foes="001" cont="0"/>
+        <request index="2" response="000" foes="000" cont="0"/>
+    </junction>
+    <junction id="merge_start" type="priority" x="1000.00" y="50.00" incLanes="ramp_0 mainline_before_0 mainline_before_1" intLanes=":merge_start_0_0 :merge_start_1_0 :merge_start_1_1" shape="963.36,50.00 963.36,40.40 962.26,40.39 961.87,40.37 961.48,40.33 961.01,40.26 960.39,40.15 959.86,43.31 960.10,43.60 960.10,50.00">
+        <request index="0" response="000" foes="000" cont="0"/>
+        <request index="1" response="000" foes="000" cont="0"/>
+        <request index="2" response="000" foes="000" cont="0"/>
+    </junction>
+    <junction id="ramp_start" type="dead_end" x="700.00" y="0.00" incLanes="" intLanes="" shape="700.00,0.00 700.53,-3.16"/>
+
+    <connection from="mainline_before" to="mainline_merge" fromLane="0" toLane="1" via=":merge_start_1_0" dir="s" state="M"/>
+    <connection from="mainline_before" to="mainline_merge" fromLane="1" toLane="2" via=":merge_start_1_1" dir="s" state="M"/>
+    <connection from="mainline_merge" to="mainline_after" fromLane="0" toLane="0" via=":merge_end_0_0" dir="s" state="m"/>
+    <connection from="mainline_merge" to="mainline_after" fromLane="1" toLane="0" keepClear="0" via=":merge_end_0_1" dir="s" state="M"/>
+    <connection from="mainline_merge" to="mainline_after" fromLane="2" toLane="1" keepClear="0" via=":merge_end_0_2" dir="s" state="M"/>
+    <connection from="ramp" to="mainline_merge" fromLane="0" toLane="0" via=":merge_start_0_0" dir="s" state="M"/>
+
+    <connection from=":merge_end_0" to="mainline_after" fromLane="0" toLane="0" dir="s" state="M"/>
+    <connection from=":merge_end_0" to="mainline_after" fromLane="1" toLane="0" dir="s" state="M"/>
+    <connection from=":merge_end_0" to="mainline_after" fromLane="2" toLane="1" dir="s" state="M"/>
+    <connection from=":merge_start_0" to="mainline_merge" fromLane="0" toLane="0" dir="s" state="M"/>
+    <connection from=":merge_start_1" to="mainline_merge" fromLane="0" toLane="1" dir="s" state="M"/>
+    <connection from=":merge_start_1" to="mainline_merge" fromLane="1" toLane="2" dir="s" state="M"/>
+
+</net>

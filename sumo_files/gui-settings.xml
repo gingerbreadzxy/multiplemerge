@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SUMO GUI设置 -->
+<viewsettings>
+    <scheme name="real world"/>
+    <delay value="50"/>
+    
+    <viewport zoom="500" x="750" y="0"/>
+    
+    <background backgroundColor="245,245,245"/>
+    
+    <!-- 车辆显示设置 -->
+    <vehicles vehicleMode="0" 
+              vehicleQuality="2" 
+              showBlinker="true"
+              drawMinGap="true" 
+              showBTRange="false"
+              showRouteIndex="false"
+              scaleLength="true"
+              vehicleName_show="true"
+              vehicleName_size="50.0"/>
+    
+    <!-- 道路显示设置 -->
+    <edges laneEdgeMode="0" 
+           scaleMode="0" 
+           laneShowBorders="true"
+           showLinkDecals="true"
+           showRails="true"/>
+    
+    <!-- 其他设置 -->
+    <legend showSizeLegend="true"/>
+    
+</viewsettings>
+
+

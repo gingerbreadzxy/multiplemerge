@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SUMO节点文件 -->
+<nodes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/nodes_file.xsd">
+    <!-- 主线节点 -->
+    <node id="mainline_start" x="0.0" y="0.0" type="priority"/>
+    <node id="merge_start" x="1000.0" y="0.0" type="priority"/>  <!-- 合流区域起点 -->
+    <node id="merge_end" x="1200.0" y="0.0" type="priority"/>    <!-- 合流区域终点 -->
+    <node id="mainline_end" x="2000.0" y="0.0" type="priority"/>
+    
+    <!-- 匝道起点 -->
+    <node id="ramp_start" x="700.0" y="-50.0" type="priority"/>
+</nodes>
