@@ -13,7 +13,14 @@ class Vehicle:
     
     def __init__(self, veh_id: str, veh_type: str, platoon_id: str = None,
                  desired_speed: float = 30.0, is_leader: bool = False, 
-                 position_in_platoon: int = -1, min_gap: float = None):
+                 position_in_platoon: int = -1, min_gap: float = None,
+                 length: float = VEHICLE_LENGTH,
+                 max_acceleration: float = MAX_ACCELERATION,
+                 max_deceleration: float = MAX_DECELERATION,
+                 emergency_decel: float = EMERGENCY_DECEL,
+                 mass: float = FUEL_VEHICLE_MASS,
+                 vehicle_class: str = "default",
+                 is_small_car: bool = False):
         self.id = veh_id
         self.type = veh_type  # 'mainline'、'fast_mainline' or 'ramp'
         self.platoon_id = platoon_id  # 所属车队ID（匝道车辆为None）
@@ -27,6 +34,13 @@ class Vehicle:
         self.lane = 0
         self.acceleration = 0.0
         self.min_gap = min_gap
+        self.length = length
+        self.max_acceleration = max_acceleration
+        self.max_deceleration = max_deceleration
+        self.emergency_decel = emergency_decel
+        self.mass = mass
+        self.vehicle_class = vehicle_class
+        self.is_small_car = is_small_car
         
     def __repr__(self):
         return f"Vehicle({self.id}, {self.type}, platoon={self.platoon_id})"
@@ -140,14 +154,20 @@ class VehicleGenerator:
             
             is_leader = (i == 0)
             
-            vehicle = Vehicle(
-                veh_id=veh_id,
-                veh_type='mainline',
-                platoon_id=platoon_id,
-                desired_speed=platoon_speed,
-                is_leader=is_leader,
-                position_in_platoon=i  # 直接使用循环变量i作为车队位置
-            )
+        vehicle = Vehicle(
+            veh_id=veh_id,
+            veh_type='mainline',
+            platoon_id=platoon_id,
+            desired_speed=platoon_speed,
+            is_leader=is_leader,
+            position_in_platoon=i,  # 直接使用循环变量i作为车队位置
+            length=VEHICLE_LENGTH,
+            max_acceleration=MAX_ACCELERATION,
+            max_deceleration=MAX_DECELERATION,
+            emergency_decel=EMERGENCY_DECEL,
+            mass=FUEL_VEHICLE_MASS,
+            vehicle_class="mainline_truck"
+        )
             
             vehicles.append(vehicle)
             
@@ -165,6 +185,22 @@ class VehicleGenerator:
         """
         veh_id = f"r{self.ramp_counter}"
         self.ramp_counter += 1
+
+        is_small_car = np.random.rand() < RAMP_SMALL_CAR_RATIO
+        if is_small_car:
+            length = FAST_MAINLINE_VEHICLE_LENGTH
+            max_acceleration = FAST_MAINLINE_MAX_ACCELERATION
+            max_deceleration = FAST_MAINLINE_MAX_DECELERATION
+            emergency_decel = FAST_MAINLINE_EMERGENCY_DECEL
+            mass = FAST_FUEL_VEHICLE_MASS
+            vehicle_class = "ramp_car"
+        else:
+            length = VEHICLE_LENGTH
+            max_acceleration = MAX_ACCELERATION
+            max_deceleration = MAX_DECELERATION
+            emergency_decel = EMERGENCY_DECEL
+            mass = FUEL_VEHICLE_MASS
+            vehicle_class = "ramp_truck"
         
         # 匝道车辆期望速度
         desired_speed = RAMP_DESIRED_SPEED + np.random.uniform(
@@ -177,7 +213,14 @@ class VehicleGenerator:
             veh_type='ramp',
             platoon_id=None,
             desired_speed=desired_speed,
-            is_leader=False
+            is_leader=False,
+            length=length,
+            max_acceleration=max_acceleration,
+            max_deceleration=max_deceleration,
+            emergency_decel=emergency_decel,
+            mass=mass,
+            vehicle_class=vehicle_class,
+            is_small_car=is_small_car
         )
         
         return vehicle
@@ -199,7 +242,14 @@ class VehicleGenerator:
             desired_speed=desired_speed,
             is_leader=False,
             position_in_platoon=-1,
-            min_gap=FAST_MAINLINE_MIN_GAP
+            min_gap=FAST_MAINLINE_MIN_GAP,
+            length=FAST_MAINLINE_VEHICLE_LENGTH,
+            max_acceleration=FAST_MAINLINE_MAX_ACCELERATION,
+            max_deceleration=FAST_MAINLINE_MAX_DECELERATION,
+            emergency_decel=FAST_MAINLINE_EMERGENCY_DECEL,
+            mass=FAST_FUEL_VEHICLE_MASS,
+            vehicle_class="fast_mainline_car",
+            is_small_car=True
         )
 
         return vehicle

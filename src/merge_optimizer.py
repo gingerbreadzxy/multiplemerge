@@ -64,6 +64,9 @@ class MergeOptimizer:
             current_time, safety_ok=True
         ))
 
+        if ramp_vehicle.get('is_small_car'):
+            return candidates
+
         # 方案2：尝试加入前车所在车队
         if front_vehicle and self._can_join_platoon(front_vehicle):
             self._append_join_candidate(
@@ -126,6 +129,8 @@ class MergeOptimizer:
 
     def _can_join_platoon(self, target_vehicle: Dict) -> bool:
         """检查目标车辆所在车队是否有空余容量可接纳匝道车"""
+        if target_vehicle.get('is_small_car'):
+            return False
         platoon_id = self._get_effective_platoon_id(target_vehicle)
         if platoon_id is None:
             return False
@@ -244,7 +249,8 @@ class MergeOptimizer:
         target_position = target_vehicle.get('position', ramp_position + 50.0)
 
         # 初始间距（正值代表前方有距离可用）
-        initial_gap = max((target_position - ramp_position) - VEHICLE_LENGTH, 1.0)
+        ramp_length = ramp_vehicle.get('length', VEHICLE_LENGTH)
+        initial_gap = max((target_position - ramp_position) - ramp_length, 1.0)
 
         time_step = 0.5
         horizon = 10.0
@@ -363,7 +369,7 @@ class MergeOptimizer:
             platoon_id = veh.get('planned_join_platoon_id') or veh.get('platoon_id')
 
             # 2)若匝道车未归属任何车队，将其视为新创建的单车车队，便于后续匝道车加入
-            if platoon_id is None and veh.get('type') == 'ramp':
+            if platoon_id is None and veh.get('type') == 'ramp' and not veh.get('is_small_car'):
                 platoon_id = f"virtual_ramp_{veh_id}"
                 self.virtual_platoon[platoon_id] = {
                     'max_size': PLATOON_SIZE_MAX,
