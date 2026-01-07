@@ -64,6 +64,8 @@ PLATOON_SPEED_DEVIATION = 2.0  # 速度偏差（m/s）
 # 匝道车辆参数
 RAMP_DESIRED_SPEED = 30.0  # 匝道车辆期望速度（m/s）
 RAMP_SPEED_DEVIATION = 3.0  # 速度偏差（m/s）
+RAMP_SMALL_CAR_RATIO = 0.3  # 匝道车辆中小汽车占比
+RAMP_SMALL_CAR_COLOR = (0, 200, 80, 255)  # 匝道小汽车颜色（RGBA）
 
 # 快车道主线车辆参数（小汽车）
 FAST_MAINLINE_DESIRED_SPEED = 33.0  # 快车道期望速度（m/s，约118km/h）

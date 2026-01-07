@@ -35,7 +35,8 @@ class DataCollector:
                              lane_id_full: str = "",
                              lane_index: int = -1,
                              distance_to_leader: float = -1.0,
-                             safe_distance_required: float = -1.0):
+                             safe_distance_required: float = -1.0,
+                             vehicle_class: str = ""):
         """
         收集单个车辆数据
         
@@ -106,7 +107,13 @@ class DataCollector:
 
         # 计算瞬时油耗率并累积总油耗
         is_following = (position_in_platoon > 0)  # 车辆是否为跟随车
-        fuel_rate = self._calculate_instantaneous_fuel(velocity, acceleration, is_following, vehicle_id)
+        fuel_rate = self._calculate_instantaneous_fuel(
+            velocity,
+            acceleration,
+            is_following,
+            vehicle_id,
+            vehicle_class
+        )
         fuel_increment = 0.0
         if vehicle_id in self.vehicle_last_timestamp:
             dt = timestamp - self.vehicle_last_timestamp[vehicle_id]
@@ -120,6 +127,7 @@ class DataCollector:
             'timestamp': round(timestamp, 1),
             'car_name': vehicle_id,
             'vehicle_type': vehicle_type,
+            'vehicle_class': vehicle_class,
             'platoon_id': platoon_display_id,
             'position_in_platoon': position_in_platoon,
             'platoon_max_size': platoon_max_size,
@@ -184,13 +192,13 @@ class DataCollector:
             return position
 
     def _calculate_instantaneous_fuel(self, speed: float, acceleration: float, is_following: bool,
-                                      vehicle_id: str = "") -> float:
+                                      vehicle_id: str = "", vehicle_class: str = "") -> float:
         """根据参考文献的模型计算瞬时油耗率（升/秒）"""
         v = max(speed, 0.0)
         a = acceleration
 
         # 根据车辆类型选择参数（快车道车辆可使用独立参数）
-        use_fast_params = vehicle_id.startswith('f')
+        use_fast_params = vehicle_id.startswith('f') or vehicle_class in {'ramp_car', 'fast_mainline_car'}
         vehicle_mass = FAST_FUEL_VEHICLE_MASS if use_fast_params else FUEL_VEHICLE_MASS
 
         # 功率项P(t)

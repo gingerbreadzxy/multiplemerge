@@ -362,10 +362,17 @@ class SimulationController:
                 traci.vehicle.setMaxSpeed(vehicle.id, FAST_MAINLINE_LANE_SPEED)
                 traci.vehicle.setLength(vehicle.id, FAST_MAINLINE_VEHICLE_LENGTH)
             else:
-                traci.vehicle.setColor(vehicle.id, (255, 200, 0, 255))  # 黄色
+                if getattr(vehicle, "is_small_car", False):
+                    traci.vehicle.setColor(vehicle.id, RAMP_SMALL_CAR_COLOR)
+                else:
+                    traci.vehicle.setColor(vehicle.id, (255, 200, 0, 255))  # 黄色
                 # 匝道车辆：完全禁止SUMO自主换道，只通过TraCI控制换道
                 traci.vehicle.setLaneChangeMode(vehicle.id, 0b000000000000)  # 完全禁止换道
                 traci.vehicle.setSpeedMode(vehicle.id, 0b011111)  # 允许正常速度控制
+                traci.vehicle.setAccel(vehicle.id, vehicle.max_acceleration)
+                traci.vehicle.setDecel(vehicle.id, vehicle.max_deceleration)
+                traci.vehicle.setEmergencyDecel(vehicle.id, vehicle.emergency_decel)
+                traci.vehicle.setLength(vehicle.id, vehicle.length)
                 # 禁用所有换道参数，确保SUMO不会自主换道
                 try:
                     traci.vehicle.setParameter(vehicle.id, "laneChangeModel.lcStrategic", "0")
@@ -388,6 +395,13 @@ class SimulationController:
                 'position_in_platoon': position_in_platoon,
                 'is_leader': vehicle.is_leader,
                 'desired_speed': vehicle.desired_speed,
+                'vehicle_class': vehicle.vehicle_class,
+                'is_small_car': vehicle.is_small_car,
+                'length': vehicle.length,
+                'mass': vehicle.mass,
+                'max_acceleration': vehicle.max_acceleration,
+                'max_deceleration': vehicle.max_deceleration,
+                'emergency_decel': vehicle.emergency_decel,
                 'depart_time': traci.simulation.getTime(),
                 'platoon_max_size': getattr(vehicle, 'platoon_max_size', None),
                 'platoon_remaining_slots': getattr(vehicle, 'platoon_remaining_slots', None)
@@ -706,6 +720,9 @@ class SimulationController:
                         'platoon_id': self.vehicle_info.get(veh_id, {}).get('platoon_id', None),
                         'is_leader': self.vehicle_info.get(veh_id, {}).get('is_leader', False),
                         'desired_speed': self.vehicle_info.get(veh_id, {}).get('desired_speed', 30.0),
+                        'length': self.vehicle_info.get(veh_id, {}).get('length', VEHICLE_LENGTH),
+                        'vehicle_class': self.vehicle_info.get(veh_id, {}).get('vehicle_class', ''),
+                        'is_small_car': self.vehicle_info.get(veh_id, {}).get('is_small_car', False),
                         'platoon_size': 1,
                         'platoon_remaining_slots': None
                     }
@@ -991,6 +1008,9 @@ class SimulationController:
                 
                 # 使用lane_id字符串来判断车辆在哪条边,
                 # 如果包含"ramp"则在匝道，包含"mainline"则在主线
+                vehicle_class = ""
+                if veh_id in self.vehicle_info:
+                    vehicle_class = self.vehicle_info[veh_id].get('vehicle_class', "")
                 self.data_collector.collect_vehicle_data(
                     vehicle_id=veh_id,
                     timestamp=current_time,
@@ -1006,7 +1026,8 @@ class SimulationController:
                     lane_id_full=lane_id,  # 保存完整的lane_id用于坐标转换
                     lane_index=lane_index,  # SUMO的车道索引（0, 1, 2）
                     distance_to_leader=distance_to_leader,
-                    safe_distance_required=safe_distance_required
+                    safe_distance_required=safe_distance_required,
+                    vehicle_class=vehicle_class
                 )
             except traci.exceptions.TraCIException:
                 continue
