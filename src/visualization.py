@@ -197,8 +197,7 @@ class Visualizer:
         
         # 子图4: 速度时间序列
         ax4 = plt.subplot(2, 3, 4)
-        import pandas as pd
-        df = pd.DataFrame(self.data_collector.data_records)
+        df = self.data_collector.get_dataframe()
         
         if len(df) > 0:
             # 计算每个时间戳的平均速度
@@ -312,8 +311,7 @@ class Visualizer:
             vehicle_ids: 要绘制的车辆ID列表，None表示绘制前几辆
             save_path: 保存路径
         """
-        import pandas as pd
-        df = pd.DataFrame(self.data_collector.data_records)
+        df = self.data_collector.get_dataframe()
         
         if len(df) == 0:
             print("警告: 没有轨迹数据")

@@ -31,10 +31,21 @@ class TripInfoAnalyzer:
                     "arrival": float(attrs.get("arrival", 0.0)),
                     "duration": float(attrs.get("duration", 0.0)),
                     "waiting_time": float(attrs.get("waitingTime", 0.0)),
+                    "depart_lane": attrs.get("departLane", ""),
+                    "depart_edge": attrs.get("departEdge", ""),
                 }
             )
 
         return tripinfos
+
+    def _is_ramp_vehicle(self, tripinfo: Dict) -> bool:
+        """判断是否为匝道车辆（兼容不同ID/出发车道字段）"""
+        depart_lane = tripinfo.get("depart_lane", "")
+        depart_edge = tripinfo.get("depart_edge", "")
+        veh_id = tripinfo.get("id", "")
+        if "ramp" in depart_lane or "ramp" in depart_edge:
+            return True
+        return veh_id.startswith("r")
 
     def calculate_waiting_statistics(self) -> Dict:
         """根据tripinfo计算等待时间相关指标"""
@@ -49,8 +60,8 @@ class TripInfoAnalyzer:
             }
 
         waited = [t for t in tripinfos if t["waiting_time"] > 0]
-        ramp_total = [t for t in tripinfos if t["id"].startswith("r")]
-        ramp_waited = [t for t in waited if t["id"].startswith("r")]
+        ramp_total = [t for t in tripinfos if self._is_ramp_vehicle(t)]
+        ramp_waited = [t for t in waited if self._is_ramp_vehicle(t)]
 
         total_wait = sum(t["waiting_time"] for t in waited)
         avg_wait = total_wait / len(waited) if waited else 0.0

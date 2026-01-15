@@ -13,10 +13,39 @@ from src.config import *
 
 class DataCollector:
     """数据收集器"""
-    
+
+    DATA_COLUMNS = [
+        'timestamp',
+        'car_name',
+        'vehicle_type',
+        'vehicle_class',
+        'platoon_id',
+        'position_in_platoon',
+        'platoon_max_size',
+        'platoon_current_size',
+        'platoon_remaining_slots',
+        'is_following',
+        'is_platoon_member',
+        'position',
+        'global_position',
+        'velocity',
+        'acceleration',
+        'lane_id',
+        'lane_id_full',
+        'lane_index',
+        'distance_to_leader',
+        'safe_distance_required',
+        'safe_distance_ok',
+        'harsh_braking',
+        'harsh_accel',
+        'fuel_rate',
+        'accumulated_distance',
+        'distance_to_merge',
+    ]
+
     def __init__(self, use_optimization: bool):
         self.use_optimization = use_optimization
-        self.data_records = []  # 存储所有数据记录
+        self.data_records = []  # 存储所有数据记录（tuple，节省内存）
         self.last_collection_time = -DATA_COLLECTION_INTERVAL
         self.vehicle_last_timestamp: Dict[str, float] = {}
         self.vehicle_fuel_consumption: Dict[str, float] = {}
@@ -123,34 +152,34 @@ class DataCollector:
         self.vehicle_fuel_consumption[vehicle_id] = self.vehicle_fuel_consumption.get(vehicle_id, 0.0) + fuel_increment
         self.total_fuel_consumption += fuel_increment
 
-        record = {
-            'timestamp': round(timestamp, 1),
-            'car_name': vehicle_id,
-            'vehicle_type': vehicle_type,
-            'vehicle_class': vehicle_class,
-            'platoon_id': platoon_display_id,
-            'position_in_platoon': position_in_platoon,
-            'platoon_max_size': platoon_max_size,
-            'platoon_current_size': platoon_current_size,
-            'platoon_remaining_slots': platoon_remaining_slots,
-            'is_following': is_following,
-            'is_platoon_member': 1 if platoon_numeric_id >= 0 else 0,
-            'position': round(position, 6),  # 局部坐标（边内）
-            'global_position': round(global_position, 6),  # 全局坐标
-            'velocity': round(velocity, 8),
-            'acceleration': round(acceleration, 1),
-            'lane_id': lane_id,
-            'lane_id_full': lane_id_full,  # 完整的lane_id字符串
-            'lane_index': lane_index,  # SUMO的车道索引（0, 1, 2）
-            'distance_to_leader': round(distance_to_leader, 2) if distance_to_leader >= 0 else -1,
-            'safe_distance_required': round(safe_distance_required, 2) if safe_distance_required >= 0 else -1,
-            'safe_distance_ok': safe_distance_ok,
-            'harsh_braking': harsh_braking,
-            'harsh_accel': harsh_accel,
-            'fuel_rate': round(fuel_rate, 6),  # 升/秒
-            'accumulated_distance': round(accumulated_distance, 6),
-            'distance_to_merge': round(distance_to_merge, 6)
-        }
+        record = (
+            round(timestamp, 1),
+            vehicle_id,
+            vehicle_type,
+            vehicle_class,
+            platoon_display_id,
+            position_in_platoon,
+            platoon_max_size,
+            platoon_current_size,
+            platoon_remaining_slots,
+            is_following,
+            1 if platoon_numeric_id >= 0 else 0,
+            round(position, 6),
+            round(global_position, 6),
+            round(velocity, 8),
+            round(acceleration, 1),
+            lane_id,
+            lane_id_full,
+            lane_index,
+            round(distance_to_leader, 2) if distance_to_leader >= 0 else -1,
+            round(safe_distance_required, 2) if safe_distance_required >= 0 else -1,
+            safe_distance_ok,
+            harsh_braking,
+            harsh_accel,
+            round(fuel_rate, 6),
+            round(accumulated_distance, 6),
+            round(distance_to_merge, 6)
+        )
 
         self.data_records.append(record)
     
@@ -225,6 +254,12 @@ class DataCollector:
     def update_collection_time(self, current_time: float):
         """更新最后收集时间"""
         self.last_collection_time = current_time
+
+    def get_dataframe(self) -> pd.DataFrame:
+        """获取当前采样记录的DataFrame视图"""
+        if not self.data_records:
+            return pd.DataFrame(columns=self.DATA_COLUMNS)
+        return pd.DataFrame(self.data_records, columns=self.DATA_COLUMNS)
     
     def export_to_excel(self, filename: str = None):
         """
@@ -241,7 +276,7 @@ class DataCollector:
             return
         
         # 转换为DataFrame
-        df = pd.DataFrame(self.data_records)
+        df = self.get_dataframe()
         
         # 按时间戳和车辆ID排序
         df = df.sort_values(['timestamp', 'car_name'])
@@ -291,6 +326,41 @@ class DataCollector:
         
         print(f"数据已导出到: {filename}")
         print(f"总记录数: {len(df)}")
+
+    def _calculate_fuel_averages(self, df: pd.DataFrame) -> Dict[str, float]:
+        """计算总体/货车/小汽车的平均油耗"""
+        if df.empty:
+            return {
+                'avg_fuel_per_vehicle_l': 0.0,
+                'avg_fuel_truck_l': 0.0,
+                'avg_fuel_car_l': 0.0,
+            }
+
+        vehicle_class_map = (
+            df.sort_values('timestamp')
+            .groupby('car_name')['vehicle_class']
+            .first()
+            .fillna('')
+        )
+        total_vehicles = df['car_name'].nunique()
+        avg_overall = self.total_fuel_consumption / total_vehicles if total_vehicles > 0 else 0.0
+
+        truck_classes = {'mainline_truck', 'ramp_truck'}
+        car_classes = {'fast_mainline_car', 'ramp_car'}
+        truck_ids = vehicle_class_map[vehicle_class_map.isin(truck_classes)].index
+        car_ids = vehicle_class_map[vehicle_class_map.isin(car_classes)].index
+
+        truck_total = sum(self.vehicle_fuel_consumption.get(vid, 0.0) for vid in truck_ids)
+        car_total = sum(self.vehicle_fuel_consumption.get(vid, 0.0) for vid in car_ids)
+
+        avg_truck = truck_total / len(truck_ids) if len(truck_ids) > 0 else 0.0
+        avg_car = car_total / len(car_ids) if len(car_ids) > 0 else 0.0
+
+        return {
+            'avg_fuel_per_vehicle_l': avg_overall,
+            'avg_fuel_truck_l': avg_truck,
+            'avg_fuel_car_l': avg_car,
+        }
     
     def get_statistics(self) -> Dict:
         """
@@ -302,7 +372,7 @@ class DataCollector:
         if not self.data_records:
             return {}
         
-        df = pd.DataFrame(self.data_records)
+        df = self.get_dataframe()
         
         # 按车辆类型分组
         mainline_slow_df = df[df['car_name'].str.startswith('m')]
@@ -310,11 +380,15 @@ class DataCollector:
         ramp_df = df[df['car_name'].str.startswith('r')]
         overall_df = df
         
+        fuel_averages = self._calculate_fuel_averages(df)
         stats = {
             'total_records': len(df),
             'unique_vehicles': df['car_name'].nunique(),
             'mainline_slow_vehicles': mainline_slow_df['car_name'].nunique(),
             'mainline_fast_vehicles': mainline_fast_df['car_name'].nunique(),
+            'mainline_vehicles': (
+                mainline_slow_df['car_name'].nunique() + mainline_fast_df['car_name'].nunique()
+            ),
             'ramp_vehicles': ramp_df['car_name'].nunique(),
             'simulation_duration': df['timestamp'].max() - df['timestamp'].min(),
             'avg_velocity_mainline_slow': mainline_slow_df['velocity'].mean() if len(mainline_slow_df) > 0 else 0,
@@ -324,8 +398,9 @@ class DataCollector:
             'max_acceleration': df['acceleration'].max(),
             'min_acceleration': df['acceleration'].min(),
             'total_fuel_consumption_l': self.total_fuel_consumption,
-            'avg_fuel_per_vehicle_l': self.total_fuel_consumption / df['car_name'].nunique()
-            if df['car_name'].nunique() > 0 else 0,
+            'avg_fuel_per_vehicle_l': fuel_averages['avg_fuel_per_vehicle_l'],
+            'avg_fuel_truck_l': fuel_averages['avg_fuel_truck_l'],
+            'avg_fuel_car_l': fuel_averages['avg_fuel_car_l'],
         }
         
         return stats
@@ -340,7 +415,7 @@ class DataCollector:
         Returns:
             车辆轨迹DataFrame
         """
-        df = pd.DataFrame(self.data_records)
+        df = self.get_dataframe()
         vehicle_df = df[df['car_name'] == vehicle_id].copy()
         vehicle_df = vehicle_df.sort_values('timestamp')
         return vehicle_df
@@ -355,7 +430,7 @@ class DataCollector:
         if not self.data_records:
             return {}
         
-        df = pd.DataFrame(self.data_records)
+        df = self.get_dataframe()
         
         # 分离主线快慢车道和匝道车辆
         mainline_slow_df = df[df['car_name'].str.startswith('m')]
@@ -445,13 +520,13 @@ class DataCollector:
             metrics['ramp_successful_merges'] = successful_merges
         
         # 整体性能指标
+        fuel_averages = self._calculate_fuel_averages(df)
         metrics['overall_avg_speed'] = df['velocity'].mean()
         metrics['overall_avg_acceleration'] = df['acceleration'].mean()
         metrics['total_fuel_consumption_l'] = self.total_fuel_consumption
-        metrics['avg_fuel_per_vehicle_l'] = (
-            self.total_fuel_consumption / df['car_name'].nunique()
-            if df['car_name'].nunique() > 0 else 0
-        )
+        metrics['avg_fuel_per_vehicle_l'] = fuel_averages['avg_fuel_per_vehicle_l']
+        metrics['avg_fuel_truck_l'] = fuel_averages['avg_fuel_truck_l']
+        metrics['avg_fuel_car_l'] = fuel_averages['avg_fuel_car_l']
 
         # 安全性指标（改进算法：合并连续事件）
         harsh_braking, harsh_accel = self._count_harsh_events_improved(df)
@@ -625,7 +700,9 @@ class PerformanceAnalyzer:
         report.append(f"    - 主线车辆: {stats.get('mainline_vehicles', 0)}")
         report.append(f"    - 匝道车辆: {stats.get('ramp_vehicles', 0)}")
         report.append(f"  总油耗: {stats.get('total_fuel_consumption_l', 0):.4f}升")
-        report.append(f"  平均油耗: {stats.get('avg_fuel_per_vehicle_l', 0):.4f}升/车")
+        report.append(f"  平均油耗(总体): {stats.get('avg_fuel_per_vehicle_l', 0):.4f}升/车")
+        report.append(f"  平均油耗(货车): {stats.get('avg_fuel_truck_l', 0):.4f}升/车")
+        report.append(f"  平均油耗(小汽车): {stats.get('avg_fuel_car_l', 0):.4f}升/车")
         report.append("")
         
         # 性能指标
